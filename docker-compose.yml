@@ -1,0 +1,55 @@
+services:
+  mini-indexer:
+    container_name: mini-indexer
+    build:
+      context: ./mini-indexer
+      dockerfile: Dockerfile 
+    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    volumes:
+      - ./mini-indexer:/usr/src/app:rw
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mini-indexer-postgres
+
+  mini-indexer-postgres:
+    container_name: mini-indexer-postgres
+    image: 'postgres:13.6-alpine'
+    environment:
+      - POSTGRES_DB=mini_indexer
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  elasticsearch:
+    container_name: es-container
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - path.data=/usr/share/elasticsearch/data
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    mem_limit: 1g
+    ports:
+      - 9200:9200
+
+  kibana:
+    container_name: kb-container
+    image: docker.elastic.co/kibana/kibana:7.11.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es-container:9200
+    depends_on:
+      - elasticsearch
+    ports:
+      - 5601:5601
+
+volumes:
+  postgres:
