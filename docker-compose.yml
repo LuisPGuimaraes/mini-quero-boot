@@ -11,6 +11,8 @@ services:
       - "3000:3000"
     depends_on:
       - mini-indexer-postgres
+      - elasticsearch
+      - kibana
 
   mini-indexer-postgres:
     container_name: mini-indexer-postgres
