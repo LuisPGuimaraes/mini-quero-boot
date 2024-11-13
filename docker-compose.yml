@@ -1,4 +1,13 @@
 services:
+  kafsender:
+    container_name: kafksender
+    ports:
+      - 9501:9501
+    image: node:18.15
+    build:
+      context: ./kafsender
+      dockerfile: Dockerfile
+
   mini-indexer:
     container_name: mini-indexer
     build:
