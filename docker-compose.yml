@@ -1,4 +1,20 @@
 services:
+  stockinho:
+    tty: true
+    stdin_open: true
+    image: node:20.18.0
+    container_name: stockinho
+    working_dir: /app
+    command: make quero-boot-startup-api
+    ports:
+      - 3400:3400
+    depends_on:
+      - postgres13
+      - kafka
+      - kafsender
+    volumes:
+      - ./stockinho:/app:cached
+      - stockinho-node-modules:/app/node_modules
   kafsender:
     container_name: kafksender
     ports:
