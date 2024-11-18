@@ -14,28 +14,57 @@ services:
     volumes:
       - ./stockinho:/app:cached
       - ./stockinho/stockinho-node-modules:/app/node_modules
-      
-  kafsender:
-    container_name: kafksender
-    depends_on:
-      - kafka
-      - zookeeper
-    environment:
-      - KAFKA_SECURITY_MECHANISM=PLAIN
-      - KAFKA_SECURITY_USERNAME=admin
-      - KAFKA_SECURITY_PASSWORD=admin-secret
+
+  kafka:
+    container_name: kafka
+    image: querodevops/kafka-kafkacat:2.0
     ports:
-      - 9500:9500
-    image: node:18.15
+      - 9092:9092
+    env_file:
+      - envs/kafka.env
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./configs/kafka/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
+
+  kafsender:
+    tty: true
+    stdin_open: true
     build:
       context: ./kafsender
-      dockerfile: Dockerfile
+    working_dir: /kafsender
+    command: make start-web
+    ports:
+      - 9500:9500
+    env_file:
+      - envs/kafsender.env
+    depends_on:
+      - kafsender-api
+      - kafka
+    volumes:
+      - ./kafsender:/kafsender
+
+  kafsender-api:
+    tty: true
+    stdin_open: true
+    build:
+      context: ./kafsender
+    working_dir: /kafsender
+    command: make start-api
+    ports:
+      - 9501:9501
+    env_file:
+      - envs/kafsender.env
+    depends_on:
+      - kafka
+    volumes:
+      - ./kafsender:/kafsender
 
   mini-indexer:
     container_name: mini-indexer
     build:
       context: ./mini-indexer
-      dockerfile: Dockerfile 
+      dockerfile: Dockerfile
     command: bundle exec rails s -p 3000 -b '0.0.0.0'
     volumes:
       - ./mini-indexer:/usr/src/app:rw
@@ -84,18 +113,6 @@ services:
       - elasticsearch
     ports:
       - 5601:5601
-  
-  kafka:
-    container_name: kafka
-    image: querodevops/kafka-kafkacat:2.0
-    ports:
-      - 9092:9092
-    env_file:
-      - envs/kafka.env
-    depends_on:
-      - zookeeper
-    volumes:
-      - ./configs/kafka/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
 
   zookeeper:
     container_name: zookeeper
