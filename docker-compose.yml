@@ -1,64 +1,17 @@
+version: '3.8'
+
 services:
-  stockinho:
-    tty: true
-    stdin_open: true
-    image: node:20.18.0
-    container_name: stockinho
-    working_dir: /app
-    command: make quero-boot-startup-worker
+  postgres:
+    container_name: postgres
+    image: 'postgres:13.6-alpine'
+    environment:
+      - POSTGRES_DB=mini_indexer
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     ports:
-      - 3400:3400
-    depends_on:
-      - postgres
-      - kafka
+      - 5432:5432
     volumes:
-      - ./stockinho:/app:cached
-      - ./stockinho/stockinho-node-modules:/app/node_modules
-
-  kafka:
-    container_name: kafka
-    image: querodevops/kafka-kafkacat:2.0
-    ports:
-      - 9092:9092
-    env_file:
-      - envs/kafka.env
-    depends_on:
-      - zookeeper
-    volumes:
-      - ./configs/kafka/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
-
-  kafsender:
-    tty: true
-    stdin_open: true
-    build:
-      context: ./kafsender
-    working_dir: /kafsender
-    command: make start-web
-    ports:
-      - 9500:9500
-    env_file:
-      - envs/kafsender.env
-    depends_on:
-      - kafsender-api
-      - kafka
-    volumes:
-      - ./kafsender:/kafsender
-
-  kafsender-api:
-    tty: true
-    stdin_open: true
-    build:
-      context: ./kafsender
-    working_dir: /kafsender
-    command: make start-api
-    ports:
-      - 9501:9501
-    env_file:
-      - envs/kafsender.env
-    depends_on:
-      - kafka
-    volumes:
-      - ./kafsender:/kafsender
+      - postgres:/var/lib/postgresql/data
 
   mini-indexer:
     container_name: mini-indexer
@@ -75,17 +28,35 @@ services:
       - elasticsearch
       - kibana
 
-  postgres:
-    container_name: postgres
-    image: 'postgres:13.6-alpine'
-    environment:
-      - POSTGRES_DB=mini_indexer
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+  stockinho:
+    tty: true
+    stdin_open: true
+    image: node:20.18.0
+    container_name: stockinho
+    working_dir: /app
+    command: make quero-boot-startup-worker
+    env_file:
+      - envs/stockinho.env
     ports:
-      - 5432:5432
+      - 3400:3400
+    depends_on:
+      - postgres
+      - kafka
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - ./stockinho:/app:cached
+      - ./stockinho/node_modules:/app/node_modules
+
+  kafka:
+    container_name: kafka
+    image: querodevops/kafka-kafkacat:2.0
+    ports:
+      - 9092:9092
+    env_file:
+      - envs/kafka.env
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./configs/kafka/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
 
   elasticsearch:
     container_name: es-container
