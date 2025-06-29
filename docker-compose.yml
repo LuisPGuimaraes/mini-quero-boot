@@ -95,5 +95,15 @@ services:
     volumes:
       - ./configs/zookeeper/zookeeper_jaas.conf:/etc/zookeeper/zookeeper_jaas.conf
 
+  kafsender:
+    container_name: kafsender
+    build:
+      context: ./kafsender
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ./kafsender:/kafsender
+
 volumes:
   postgres:
