@@ -101,7 +101,7 @@ services:
       context: ./kafsender
       dockerfile: Dockerfile
     ports:
-      - 3000:3000
+      - 9500:9500
     volumes:
       - ./kafsender:/kafsender
 
