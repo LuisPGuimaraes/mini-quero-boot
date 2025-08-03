@@ -45,6 +45,7 @@ services:
     depends_on:
       - postgres
       - kafka
+      - kafdrop
     volumes:
       - ./stockinho:/app:cached
       - ./stockinho/node_modules:/app/node_modules
@@ -100,6 +101,7 @@ services:
 
   kafsender:
     container_name: kafsender
+    command: make start-web
     build:
       context: ./kafsender
       dockerfile: Dockerfile
@@ -109,6 +111,33 @@ services:
       - ./kafsender:/kafsender
     env_file:
       - envs/kafsender.env 
+    depends_on:
+      - kafka
+      - kafsender-api
+
+  kafsender-api:
+    container_name: kafsender-api
+    command: make start-api
+    build:
+      context: ./kafsender
+      dockerfile: Dockerfile
+    ports:
+      - 9501:9501
+    volumes:
+      - ./kafsender:/kafsender
+    env_file:
+      - envs/kafsender.env
+
+  kafdrop: 
+    container_name: kafdrop
+    image: obsidiandynamics/kafdrop:latest
+    ports:
+      - 9000:9000
+    environment:
+      KAFKA_BROKERCONNECT: kafka:9092
+      JVM_OPTS: -Xms32m -Xmx64m
+    depends_on:
+      - kafka
 
 
 volumes:
